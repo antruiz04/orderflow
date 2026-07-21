@@ -18,7 +18,7 @@ Client
 
 | Service    | Purpose                          | Local URL        |
 |-----------|-----------------------------------|------------------|
-| PostgreSQL | 4 databases (database-per-service) | `localhost:5432` |
+| PostgreSQL | 4 databases (database-per-service) | `localhost:5433` |
 | Redpanda   | Kafka-compatible message broker   | `localhost:19092` (host) / `redpanda:9092` (Docker) |
 | Redis      | Cache / token blacklist           | `localhost:6379` |
 | Mailhog    | Fake SMTP for notification demos  | http://localhost:8025 |
@@ -50,12 +50,29 @@ orderflow/
 ## Development roadmap
 
 - [x] Step 1: Infrastructure (Docker Compose)
-- [ ] Step 2: Auth Service (NestJS + JWT + PostgreSQL)
+- [x] Step 2: Auth Service (NestJS + JWT + PostgreSQL)
 - [ ] Step 3: Catalog Service (Django + admin)
 - [ ] Step 4: Orders Service + Kafka producer
 - [ ] Step 5: Inventory Service + Kafka consumer
 - [ ] Step 6: Notifications Service (Python)
 - [ ] Step 7: API Gateway + documentation
+
+### Auth improvements (later)
+
+- [ ] Replace TypeORM `synchronize: true` with explicit migrations (production-safe schema changes)
+- [x] Health check verifies Postgres, not only that the Node process is up
+- [x] Read `PORT` via ConfigService (same style as the rest of the app)
+
+## Auth Service (local)
+
+```bash
+cd apps/auth-service
+cp .env.example .env
+npm install
+npm run start:dev
+```
+
+Runs on http://localhost:3001 — see `apps/auth-service/README.md`.
 
 ## License
 

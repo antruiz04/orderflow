@@ -41,3 +41,9 @@ If you only advertise `redpanda:9092`, host clients connect to `localhost:9092` 
 ## Why one PostgreSQL container with 4 databases?
 
 In production you'd often use separate DB instances. Locally, one Postgres with 4 databases keeps the **database-per-service idea** without eating RAM. Each microservice still connects only to its own DB name.
+
+## Schema changes (Auth / NestJS)
+
+In local development Auth uses TypeORM `synchronize: true` so tables follow the entities when the app starts. That is convenient, but **not for production** — changing an entity could alter or drop columns with real data. The planned upgrade is explicit TypeORM migrations (`migration:generate` / `migration:run`).
+
+Auth `/health` also runs `SELECT 1` against Postgres. If the DB is down, you get **503**, not a fake OK.
