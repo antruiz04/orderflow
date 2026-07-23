@@ -66,7 +66,8 @@ export class AuthService {
   }
 
   private signToken(userId: string, email: string, role: UserRole) {
-    // El payload viaja dentro del JWT. No pongas datos sensibles aquí.
+    // Contrato JWT entre microservicios: docs/jwt-contract.md
+    // Campos requeridos por Catalog (y futuros consumidores): sub, email, role
     return this.jwtService.signAsync({
       sub: userId,
       email,

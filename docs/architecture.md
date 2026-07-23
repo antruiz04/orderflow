@@ -7,7 +7,7 @@ We split the system by **business capability**, not by technical layer:
 | Service       | Owns                         | Database   |
 |---------------|------------------------------|------------|
 | Auth          | Users, login, JWT            | `auth_db`  |
-| Catalog       | Products, categories, stock  | `catalog_db` |
+| Catalog       | Products, categories         | `catalog_db` |
 | Orders        | Orders lifecycle             | `orders_db` |
 | Inventory     | Stock reservations           | `inventory_db` |
 | Notifications | Email/SMS side effects       | none (stateless consumer) |
@@ -47,3 +47,9 @@ In production you'd often use separate DB instances. Locally, one Postgres with 
 In local development Auth uses TypeORM `synchronize: true` so tables follow the entities when the app starts. That is convenient, but **not for production** — changing an entity could alter or drop columns with real data. The planned upgrade is explicit TypeORM migrations (`migration:generate` / `migration:run`).
 
 Auth `/health` also runs `SELECT 1` against Postgres. If the DB is down, you get **503**, not a fake OK.
+
+## Catalog and Auth JWT
+
+Catalog does **not** store users. For write APIs it validates the Bearer JWT with the **same `JWT_SECRET`** as Auth Service (PyJWT). Only `role: admin` can create/update products and categories. Reads stay public.
+
+Full payload contract: [jwt-contract.md](jwt-contract.md).

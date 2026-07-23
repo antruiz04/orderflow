@@ -42,16 +42,20 @@ docker compose ps
 orderflow/
 ├── apps/                 # Microservices (added step by step)
 ├── docker/               # Init scripts, configs
-├── docs/                 # Architecture notes
+├── docs/                 # Architecture notes + JWT contract
 ├── docker-compose.yml
 └── README.md
 ```
 
+## Docs
+
+- [Architecture](docs/architecture.md) — why microservices, Kafka listeners, DB-per-service
+- [JWT contract](docs/jwt-contract.md) — payload shared by Auth (Nest) and Catalog (Django)
 ## Development roadmap
 
 - [x] Step 1: Infrastructure (Docker Compose)
 - [x] Step 2: Auth Service (NestJS + JWT + PostgreSQL)
-- [ ] Step 3: Catalog Service (Django + admin)
+- [x] Step 3: Catalog Service (Django + admin)
 - [ ] Step 4: Orders Service + Kafka producer
 - [ ] Step 5: Inventory Service + Kafka consumer
 - [ ] Step 6: Notifications Service (Python)
@@ -74,6 +78,20 @@ npm run start:dev
 
 Runs on http://localhost:3001 — see `apps/auth-service/README.md`.
 
+## Catalog Service (local)
+
+```bash
+cd apps/catalog-service
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+python manage.py migrate
+python manage.py runserver 8000
+```
+
+Runs on http://localhost:8000 — see `apps/catalog-service/README.md`.
+Use the same `JWT_SECRET` as Auth. Write endpoints need `role: admin`.
 ## License
 
 MIT

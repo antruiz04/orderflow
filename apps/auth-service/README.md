@@ -53,6 +53,7 @@ curl http://localhost:3001/auth/profile ^
 
 - **bcrypt** hashea la password antes de guardarla.
 - El **JWT** lleva `sub` (user id), `email` y `role`. No lleva la password.
+- Contrato con otros servicios: [docs/jwt-contract.md](../../docs/jwt-contract.md) — si cambias el payload, avisa a Catalog.
 - Usamos solo la base **`auth_db`**. Otros servicios no deben leer esta tabla directo.
 - **`synchronize: true`** es solo para desarrollo local. En producción irían migraciones TypeORM (cambios de schema versionados y explícitos).
 - **`/health`** hace un `SELECT 1` a Postgres. Si la DB está caída responde 503, no un falso "ok".
