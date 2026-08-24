@@ -1,15 +1,8 @@
-# OrderFlow — infraestructura local
-# Levanta: PostgreSQL, Redpanda (Kafka), Redis, Mailhog
-#
-# Uso:
-#   docker compose up -d
-#   docker compose ps
-#   docker compose down
+# Infra local OrderFlow
+# docker compose up -d
 
 services:
-  # ---------------------------------------------------------------------------
-  # PostgreSQL — una instancia, 4 bases de datos (una por microservicio)
-  # ---------------------------------------------------------------------------
+  # Postgres — 4 DBs (auth, catalog, orders, inventory)
   postgres:
     image: postgres:16-alpine
     container_name: orderflow-postgres
@@ -28,9 +21,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ---------------------------------------------------------------------------
-  # Redpanda — broker compatible con Kafka (más liviano que Kafka + Zookeeper)
-  # ---------------------------------------------------------------------------
+  # Redpanda (Kafka sin Zookeeper)
   redpanda:
     image: redpandadata/redpanda:v24.2.4
     container_name: orderflow-redpanda
@@ -44,24 +35,20 @@ services:
       - --reserve-memory=0M
       - --node-id=0
       - --check=false
-      # Dos listeners:
-      # - PLAINTEXT → servicios DENTRO de Docker (hostname: redpanda)
-      # - OUTSIDE   → apps en tu máquina (npm run start:dev, scripts, etc.)
+      # PLAINTEXT = red de Docker | OUTSIDE = localhost desde el PC
       - --kafka-addr=PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
       - --advertise-kafka-addr=PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092
     ports:
-      - "9092:9092"     # interno Docker
-      - "19092:19092"   # host (tu PC)
-      - "9644:9644"     # admin / metrics
+      - "9092:9092"
+      - "19092:19092"
+      - "9644:9644"
     healthcheck:
       test: ["CMD", "rpk", "cluster", "health"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ---------------------------------------------------------------------------
-  # Redis — caché, blacklist de tokens, etc. (lo usaremos más adelante)
-  # ---------------------------------------------------------------------------
+  # Redis (más adelante)
   redis:
     image: redis:7-alpine
     container_name: orderflow-redis
@@ -74,16 +61,14 @@ services:
       timeout: 3s
       retries: 5
 
-  # ---------------------------------------------------------------------------
-  # Mailhog — servidor SMTP falso; captura emails en http://localhost:8025
-  # ---------------------------------------------------------------------------
+  # Mailhog — emails fake en http://localhost:8025
   mailhog:
     image: mailhog/mailhog:v1.0.1
     container_name: orderflow-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # UI web
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   postgres_data:

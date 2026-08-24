@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UserRole } from '../users/user.entity';
 
+/** claims del JWT — docs/jwt-contract.md */
 export type JwtPayload = {
   sub: string;
   email: string;
-  role: UserRole;
+  role: string;
 };
 
 @Injectable()
@@ -20,7 +20,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  // si la firma es válida, passport mete esto en request.user
   validate(payload: JwtPayload) {
     return {
       userId: payload.sub,

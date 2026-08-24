@@ -9,7 +9,7 @@ export class RegisterDto {
   @MinLength(8, { message: 'Password must be at least 8 characters' })
   password: string;
 
-  /** Opcional: por defecto queda customer. Útil para crear un admin en demos. */
+  /** opcional; default customer */
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;

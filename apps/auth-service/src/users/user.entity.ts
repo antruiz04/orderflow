@@ -11,10 +11,6 @@ export enum UserRole {
   ADMIN = 'admin',
 }
 
-/**
- * Tabla `users` en auth_db.
- * Solo este servicio debería tocar esta tabla (database-per-service).
- */
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -23,7 +19,7 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  /** Hash bcrypt — nunca guardamos la contraseña en texto plano */
+  // bcrypt hash
   @Column({ name: 'password_hash' })
   passwordHash: string;
 

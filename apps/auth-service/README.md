@@ -1,59 +1,46 @@
 # Auth Service
 
-Este microservicio se encarga de una sola cosa: **saber quién eres**.
+Login / register / JWT. El resto de OrderFlow confía en este token.
 
-Aquí registras usuarios, inicias sesión y recibes un JWT. Los demás servicios de OrderFlow más adelante van a confiar en ese token.
-
-## Qué endpoints tiene
+## Endpoints
 
 | Método | Ruta | Auth | Descripción |
 |--------|------|------|-------------|
-| GET | `/health` | No | Proceso + conexión a Postgres (`database: up/down`) |
-| POST | `/auth/register` | No | Crea cuenta y devuelve JWT |
-| POST | `/auth/login` | No | Login y JWT |
-| GET | `/auth/profile` | Bearer JWT | Datos del usuario logueado |
+| GET | `/health` | No | app + Postgres |
+| POST | `/auth/register` | No | crea usuario + JWT |
+| POST | `/auth/login` | No | login + JWT |
+| GET | `/auth/profile` | Bearer | usuario actual |
 
-## Cómo arrancarlo
-
-1. Docker con Postgres arriba (`docker compose up -d` en la raíz de OrderFlow).
-2. Copia el env:
+## Run
 
 ```bash
+# docker compose up -d en la raíz
 cp .env.example .env
-```
-
-3. Instala y corre:
-
-```bash
 npm install
 npm run start:dev
 ```
 
-Queda en **http://localhost:3001**
+http://localhost:3001
 
-## Prueba rápida
+## Probar
 
 ```bash
-# Registro
 curl -X POST http://localhost:3001/auth/register ^
   -H "Content-Type: application/json" ^
   -d "{\"email\":\"demo@orderflow.dev\",\"password\":\"secret123\"}"
 
-# Login
 curl -X POST http://localhost:3001/auth/login ^
   -H "Content-Type: application/json" ^
   -d "{\"email\":\"demo@orderflow.dev\",\"password\":\"secret123\"}"
 
-# Perfil (pega el accessToken que te devolvió login)
 curl http://localhost:3001/auth/profile ^
-  -H "Authorization: Bearer TU_TOKEN_AQUI"
+  -H "Authorization: Bearer TU_TOKEN"
 ```
 
-## Ideas clave (para entrevistas)
+## Notas
 
-- **bcrypt** hashea la password antes de guardarla.
-- El **JWT** lleva `sub` (user id), `email` y `role`. No lleva la password.
-- Contrato con otros servicios: [docs/jwt-contract.md](../../docs/jwt-contract.md) — si cambias el payload, avisa a Catalog.
-- Usamos solo la base **`auth_db`**. Otros servicios no deben leer esta tabla directo.
-- **`synchronize: true`** es solo para desarrollo local. En producción irían migraciones TypeORM (cambios de schema versionados y explícitos).
-- **`/health`** hace un `SELECT 1` a Postgres. Si la DB está caída responde 503, no un falso "ok".
+- password con bcrypt
+- JWT: `sub`, `email`, `role` — ver [jwt-contract.md](../../docs/jwt-contract.md)
+- solo usa `auth_db`
+- `synchronize: true` solo en local; en prod van migraciones
+- `/health` pega un `SELECT 1` a Postgres

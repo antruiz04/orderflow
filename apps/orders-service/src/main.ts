@@ -6,7 +6,6 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ValidationPipe para los DTOs
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -16,10 +15,10 @@ async function bootstrap() {
   );
 
   const config = app.get(ConfigService);
-  const port = Number(config.get('PORT') ?? 3001);
+  const port = Number(config.get('PORT') ?? 3002);
 
   await app.listen(port);
-  console.log(`Auth service listening on http://localhost:${port}`);
+  console.log(`Orders service listening on http://localhost:${port}`);
 }
 
 bootstrap();

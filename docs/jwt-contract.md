@@ -1,84 +1,59 @@
-# JWT contract (Auth ↔ other services)
+# JWT entre Auth y el resto
 
-This is the **shared agreement** between Auth Service (NestJS) and any service that trusts its tokens (today: Catalog / Django).
+Auth firma el token. Catalog y Orders lo validan con el mismo `JWT_SECRET`.
+No comparten DB ni código: el contrato es el shape del payload.
 
-They do not share a database or a code library. The JWT payload shape **is** the API between them.
+Si cambio los claims en Auth, tengo que actualizar este doc y los consumidores.
 
-If you change this contract in Auth, update every consumer (and this file) in the same change.
+## Quién hace qué
 
-## Who does what
+| | Servicio | Rol |
+|--|----------|-----|
+| Emite | Auth | login/register → JWT |
+| Consume | Catalog, Orders | leen `Authorization: Bearer ...` |
 
-| Role | Service | Responsibility |
-|------|---------|----------------|
-| Issuer | Auth (`apps/auth-service`) | Login / register → signs the JWT |
-| Consumer | Catalog (`apps/catalog-service`), later others | Reads `Authorization: Bearer …` and verifies the signature |
+## Secrets
 
-## Shared secrets
+- `JWT_SECRET` igual en todos los `.env`
+- algoritmo: `HS256`
+- el secret real no va a GitHub (solo `.env.example`)
 
-| Variable | Value |
-|----------|--------|
-| `JWT_SECRET` | Same string in Auth `.env` and Catalog `.env` |
-| Algorithm | `HS256` |
+## Payload
 
-Never commit real secrets. Only `.env.example` placeholders go to GitHub.
-
-## Access token payload (required fields)
-
-Auth signs exactly these claims (see `signToken()` in Auth):
+Lo firma Auth en `signToken()`:
 
 ```json
 {
   "sub": "<user uuid>",
-  "email": "<user email>",
+  "email": "<email>",
   "role": "customer" | "admin",
-  "iat": 1234567890,
-  "exp": 1234567890
+  "iat": ...,
+  "exp": ...
 }
 ```
 
-| Claim | Meaning | Used by Catalog |
-|-------|---------|-----------------|
-| `sub` | User id | Identity (`AuthUser.id`) |
-| `email` | User email | Identity (`AuthUser.email`) |
-| `role` | Authorization | Write APIs require `"admin"` |
-| `iat` / `exp` | Issued / expiry | Rejected if expired |
+Si falta `sub`, `email` o `role`, el consumidor rechaza el token.
 
-Catalog fails authentication if `sub`, `email`, or `role` is missing.
+| role | |
+|------|--|
+| `customer` | default; puede crear pedidos; no escribe en Catalog |
+| `admin` | puede escribir en Catalog |
 
-## Roles
+## Ejemplo
 
-| Value | Meaning |
-|-------|---------|
-| `customer` | Default. Can read public catalog endpoints. Cannot create/update products or categories. |
-| `admin` | Can create/update catalog resources via API. |
+1. Login en Auth → `accessToken`
+2. Request a Catalog/Orders con `Authorization: Bearer ...`
+3. El servicio verifica la firma localmente (no llama a Auth en cada request)
 
-## How a request looks
+## Qué lo rompe
 
-```http
-POST /api/products/ HTTP/1.1
-Host: localhost:8000
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-Content-Type: application/json
-```
+- renombrar `sub` → `userId`
+- mandar `roles: []` en vez de `role`
+- cambiar el algoritmo sin avisar
+- usar otro `JWT_SECRET` en un servicio
 
-1. Client logs in on Auth → gets `accessToken`.
-2. Client calls Catalog with that token in the header.
-3. Catalog verifies signature with `JWT_SECRET` (PyJWT).
-4. If `role === "admin"` → allow write; otherwise → 403.
+## Código
 
-Catalog does **not** call Auth on every request. Verification is local and stateless.
-
-## What breaks the contract
-
-Examples that will break Catalog (or future consumers) without a coordinated update:
-
-- Renaming `sub` → `userId`
-- Sending `roles: ["admin"]` instead of `role: "admin"`
-- Changing algorithm without updating consumers
-- Using a different `JWT_SECRET` per service
-
-## Code pointers
-
-- Issuer: `apps/auth-service/src/auth/auth.service.ts` → `signToken()`
-- Consumer: `apps/catalog-service/catalog/authentication.py` → `AuthServiceJWTAuthentication`
-- Permission: `apps/catalog-service/catalog/permissions.py` → `IsAdminOrReadOnly`
+- Auth: `apps/auth-service/src/auth/auth.service.ts` → `signToken()`
+- Catalog: `apps/catalog-service/catalog/authentication.py`
+- Orders: `apps/orders-service/src/auth/jwt.strategy.ts`

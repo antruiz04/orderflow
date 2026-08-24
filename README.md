@@ -1,73 +1,75 @@
 # OrderFlow
 
-Event-driven order management platform built with microservices, Apache Kafka (Redpanda), NestJS, Django, PostgreSQL, JWT and Docker.
+Pedido + inventario con microservicios. NestJS, Django, Postgres, JWT y Kafka (Redpanda).
 
-## Architecture (planned)
+## Arquitectura
 
 ```
 Client
-  └── API Gateway (NestJS) — later
-        ├── Auth Service (NestJS + PostgreSQL + JWT)
-        ├── Catalog Service (Django + PostgreSQL)
-        ├── Orders Service (NestJS + PostgreSQL + Kafka producer)
-        ├── Inventory Service (NestJS + PostgreSQL + Kafka consumer)
-        └── Notifications Service (Python + Kafka consumer)
+  └── API Gateway (NestJS) — pendiente
+        ├── Auth (NestJS + Postgres + JWT)
+        ├── Catalog (Django + Postgres)
+        ├── Orders (NestJS + Postgres + Kafka producer)
+        ├── Inventory (NestJS + Postgres + Kafka consumer) — pendiente
+        └── Notifications (Python consumer) — pendiente
 ```
 
-## Infrastructure (Step 1 — done)
+## Infra local
 
-| Service    | Purpose                          | Local URL        |
-|-----------|-----------------------------------|------------------|
-| PostgreSQL | 4 databases (database-per-service) | `localhost:5433` |
-| Redpanda   | Kafka-compatible message broker   | `localhost:19092` (host) / `redpanda:9092` (Docker) |
-| Redis      | Cache / token blacklist           | `localhost:6379` |
-| Mailhog    | Fake SMTP for notification demos  | http://localhost:8025 |
-
-## Quick start
+| Servicio   | Para qué              | URL |
+|------------|-----------------------|-----|
+| PostgreSQL | una DB por servicio   | `localhost:5433` |
+| Redpanda   | Kafka-compatible      | `localhost:19092` (PC) / `redpanda:9092` (Docker) |
+| Redis      | cache / tokens (más adelante) | `localhost:6379` |
+| Mailhog    | emails fake           | http://localhost:8025 |
 
 ```bash
-# 1. Copy environment file
 cp .env.example .env
-
-# 2. Start infrastructure
 docker compose up -d
-
-# 3. Check services
 docker compose ps
 ```
 
-## Project structure
+## Estructura
 
 ```
 orderflow/
-├── apps/                 # Microservices (added step by step)
-├── docker/               # Init scripts, configs
-├── docs/                 # Architecture notes + JWT contract
+├── apps/
+├── docker/
+├── docs/
 ├── docker-compose.yml
 └── README.md
 ```
 
 ## Docs
 
-- [Architecture](docs/architecture.md) — why microservices, Kafka listeners, DB-per-service
-- [JWT contract](docs/jwt-contract.md) — payload shared by Auth (Nest) and Catalog (Django)
-## Development roadmap
+- [architecture.md](docs/architecture.md)
+- [jwt-contract.md](docs/jwt-contract.md) — payload del JWT entre servicios
+- [events.md](docs/events.md) — eventos Kafka
 
-- [x] Step 1: Infrastructure (Docker Compose)
-- [x] Step 2: Auth Service (NestJS + JWT + PostgreSQL)
-- [x] Step 3: Catalog Service (Django + admin)
-- [ ] Step 4: Orders Service + Kafka producer
-- [ ] Step 5: Inventory Service + Kafka consumer
-- [ ] Step 6: Notifications Service (Python)
-- [ ] Step 7: API Gateway + documentation
+## Roadmap
 
-### Auth improvements (later)
+- [x] Infra (Docker Compose)
+- [x] Auth
+- [x] Catalog
+- [x] Orders + producer Kafka
+- [ ] Inventory (consumer) + confirmar/cancelar pedido según stock
+- [ ] Notifications
+- [ ] API Gateway
 
-- [ ] Replace TypeORM `synchronize: true` with explicit migrations (production-safe schema changes)
-- [x] Health check verifies Postgres, not only that the Node process is up
-- [x] Read `PORT` via ConfigService (same style as the rest of the app)
+### Pendiente Auth
 
-## Auth Service (local)
+- [ ] Migraciones TypeORM (sacar `synchronize: true`)
+- [x] `/health` chequea Postgres
+- [x] Puerto vía ConfigService
+
+### Pendiente Orders
+
+- [ ] Outbox: ahora hago save en Postgres y luego publish a Kafka. Si Kafka falla a mitad, el pedido queda `pending` sin evento. Quiero guardar el evento en la misma transacción y publicarlo después.
+- [ ] Pedir precios a Catalog en paralelo (`Promise.all`) y no repetir el mismo `productId`
+- [x] Precio desde Catalog (no confío en lo que manda el cliente)
+- [x] Totales con `decimal.js`
+
+## Correr Auth
 
 ```bash
 cd apps/auth-service
@@ -76,9 +78,9 @@ npm install
 npm run start:dev
 ```
 
-Runs on http://localhost:3001 — see `apps/auth-service/README.md`.
+http://localhost:3001
 
-## Catalog Service (local)
+## Correr Catalog
 
 ```bash
 cd apps/catalog-service
@@ -90,8 +92,19 @@ python manage.py migrate
 python manage.py runserver 8000
 ```
 
-Runs on http://localhost:8000 — see `apps/catalog-service/README.md`.
-Use the same `JWT_SECRET` as Auth. Write endpoints need `role: admin`.
+http://localhost:8000 — mismo `JWT_SECRET` que Auth. Escritura solo con `role: admin`.
+
+## Correr Orders
+
+```bash
+cd apps/orders-service
+cp .env.example .env
+npm install
+npm run start:dev
+```
+
+http://localhost:3002 — publica `order.created` en Redpanda (`localhost:19092`).
+
 ## License
 
 MIT

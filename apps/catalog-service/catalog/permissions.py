@@ -2,10 +2,7 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class IsAdminOrReadOnly(BasePermission):
-    """
-    GET/HEAD/OPTIONS → cualquiera.
-    POST/PATCH/PUT/DELETE → solo JWT con role=admin (el de Auth Service).
-    """
+    """GET libre; escritura solo admin (JWT de Auth)."""
 
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:

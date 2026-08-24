@@ -1,8 +1,7 @@
 """
-Settings del Catalog Service.
+Settings Catalog.
 
-Lee variables desde .env (python-dotenv).
-La base es catalog_db — database-per-service: este servicio no toca auth_db.
+.env con dotenv. DB: catalog_db (esta app no toca auth_db).
 """
 
 import os
@@ -86,7 +85,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Mismo secreto que Auth Service — validamos sus JWT sin llamar a Auth en cada request
+# mismo secret que Auth para validar JWT
 JWT_SECRET = os.getenv('JWT_SECRET', '')
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
 

@@ -1,55 +1,49 @@
-# OrderFlow — Architecture
+# Architecture
 
-## Why microservices here?
+Cada servicio tiene su propia base. No se cruzan tablas entre servicios: hablan por HTTP o por Kafka.
 
-We split the system by **business capability**, not by technical layer:
+| Service       | Qué maneja              | DB |
+|---------------|-------------------------|----|
+| Auth          | users, login, JWT       | `auth_db` |
+| Catalog       | products, categories    | `catalog_db` |
+| Orders        | pedidos                 | `orders_db` |
+| Inventory     | reservas de stock       | `inventory_db` |
+| Notifications | emails (side effects)   | — |
 
-| Service       | Owns                         | Database   |
-|---------------|------------------------------|------------|
-| Auth          | Users, login, JWT            | `auth_db`  |
-| Catalog       | Products, categories         | `catalog_db` |
-| Orders        | Orders lifecycle             | `orders_db` |
-| Inventory     | Stock reservations           | `inventory_db` |
-| Notifications | Email/SMS side effects       | none (stateless consumer) |
-
-Each service has its **own database**. Services never read another service's DB directly — they communicate via **HTTP** (sync) or **Kafka events** (async).
-
-## Event flow (target)
+## Flujo objetivo
 
 ```
-1. Client creates order          → Orders Service
-2. Orders publishes order.created → Kafka
-3. Inventory consumes event       → reserves stock
-4. Inventory publishes inventory.reserved OR inventory.failed
-5. Orders updates status
-6. Notifications sends confirmation email (Mailhog in dev)
+1. Cliente crea pedido            → Orders
+2. Orders publica order.created   → Kafka
+3. Inventory reserva stock
+4. Inventory publica reserved / failed
+5. Orders actualiza status
+6. Notifications manda mail (Mailhog en local)
 ```
 
-## Why Redpanda instead of Kafka + Zookeeper?
+## Redpanda
 
-Redpanda speaks the Kafka protocol but runs as a **single lightweight process**. For a portfolio project on a laptop, that's enough and recruiters still see "Kafka" in the README.
+Uso Redpanda porque habla el protocolo de Kafka y es más liviano que Kafka + Zookeeper en la laptop.
 
-## Redpanda: two listeners (Docker vs host)
+Dos listeners:
 
-Kafka clients connect, then the broker replies with an **advertised** address for later traffic.
+- Dentro de Docker: `redpanda:9092`
+- Desde el PC (`npm run start:dev`): `localhost:19092`
 
-- Inside Docker: use `redpanda:9092` (PLAINTEXT listener).
-- On your machine (`npm run start:dev`): use `localhost:19092` (OUTSIDE listener).
+Si solo publicas `redpanda:9092`, desde el host se rompe porque ese hostname no existe fuera de la red de Docker.
 
-If you only advertise `redpanda:9092`, host clients connect to `localhost:9092` once, then fail because they cannot resolve the hostname `redpanda`.
+## Postgres
 
-## Why one PostgreSQL container with 4 databases?
+En prod normalmente cada servicio tendría su instancia. Acá uso un solo contenedor con 4 databases para no comer tanta RAM. Cada app solo se conecta a la suya.
 
-In production you'd often use separate DB instances. Locally, one Postgres with 4 databases keeps the **database-per-service idea** without eating RAM. Each microservice still connects only to its own DB name.
+## Auth / TypeORM
 
-## Schema changes (Auth / NestJS)
+En local `synchronize: true` para no pelearme con migraciones mientras armo el servicio. En prod eso no va: puede romper columnas. Pendiente pasar a migraciones.
 
-In local development Auth uses TypeORM `synchronize: true` so tables follow the entities when the app starts. That is convenient, but **not for production** — changing an entity could alter or drop columns with real data. The planned upgrade is explicit TypeORM migrations (`migration:generate` / `migration:run`).
+`/health` hace `SELECT 1`. Si Postgres está caído → 503.
 
-Auth `/health` also runs `SELECT 1` against Postgres. If the DB is down, you get **503**, not a fake OK.
+## Catalog + JWT
 
-## Catalog and Auth JWT
+Catalog no tiene usuarios propios. Para escribir valida el JWT de Auth con el mismo `JWT_SECRET`. Solo `admin` puede crear/editar. Lectura pública.
 
-Catalog does **not** store users. For write APIs it validates the Bearer JWT with the **same `JWT_SECRET`** as Auth Service (PyJWT). Only `role: admin` can create/update products and categories. Reads stay public.
-
-Full payload contract: [jwt-contract.md](jwt-contract.md).
+Detalle del payload: [jwt-contract.md](jwt-contract.md).

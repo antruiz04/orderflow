@@ -12,7 +12,7 @@ from .serializers import CategorySerializer, ProductSerializer
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health(request):
-    """Proceso vivo + SELECT 1 a catalog_db (igual idea que Auth)."""
+    """app + postgres"""
     try:
         with connection.cursor() as cursor:
             cursor.execute('SELECT 1')
@@ -39,7 +39,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # En listado público solo mostramos activos; admin puede ver todos con ?all=1
+        # por defecto solo activos; admin puede pedir ?all=1
         if self.request.query_params.get('all') == '1':
             user = self.request.user
             if getattr(user, 'is_admin', False):

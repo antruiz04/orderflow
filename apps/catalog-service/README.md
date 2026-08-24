@@ -1,51 +1,37 @@
 # Catalog Service
 
-Este microservicio es el **catálogo**: categorías y productos.
+Categorías y productos (Django + DRF).
 
-Lee cualquiera. Crear/editar solo con un JWT de Auth Service cuyo `role` sea `admin`.
+Lectura pública. Escritura solo con JWT de Auth y `role=admin`.
 
 ## Endpoints
 
-| Método | Ruta | Auth | Descripción |
-|--------|------|------|-------------|
-| GET | `/health/` | No | Proceso + Postgres (`catalog_db`) |
-| GET | `/api/categories/` | No | Listar categorías |
-| POST | `/api/categories/` | Bearer JWT (admin) | Crear categoría |
-| GET | `/api/products/` | No | Listar productos activos |
-| POST | `/api/products/` | Bearer JWT (admin) | Crear producto |
-| GET | `/api/products/{id}/` | No | Detalle |
-| PATCH | `/api/products/{id}/` | Bearer JWT (admin) | Actualizar |
-| — | `/admin/` | Django superuser | Panel admin (demo) |
+| Método | Ruta | Auth |
+|--------|------|------|
+| GET | `/health/` | no |
+| GET/POST | `/api/categories/` | write = admin |
+| GET/POST/PATCH | `/api/products/` | write = admin |
+| | `/admin/` | superuser de Django |
 
-## Cómo arrancarlo
-
-1. Docker con Postgres arriba (`docker compose up -d` en la raíz de OrderFlow).
-2. Mismo `JWT_SECRET` que en Auth (cópialo a `.env`).
-3. Instala y migra:
+## Run
 
 ```bash
 python -m venv .venv
-# Windows:
 .venv\Scripts\activate
 pip install -r requirements.txt
 copy .env.example .env
+# mismo JWT_SECRET que Auth
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver 8000
 ```
 
-Queda en **http://localhost:8000**
+http://localhost:8000
 
-## Probar con JWT de Auth
+## Probar escritura
 
-1. En Auth, registra un admin:
-
-```json
-POST http://localhost:3001/auth/register
-{ "email": "admin@orderflow.dev", "password": "secret123", "role": "admin" }
-```
-
-2. Usa el `accessToken` en Catalog:
+1. Registra un admin en Auth (`role: "admin"`)
+2. Usa el token:
 
 ```bash
 curl http://localhost:8000/api/categories/ ^
@@ -54,10 +40,10 @@ curl http://localhost:8000/api/categories/ ^
   -d "{\"name\":\"Electronics\"}"
 ```
 
-## Ideas clave
+## Notas
 
-- Precio en **Decimal** (`max_digits=12`, `decimal_places=2`).
-- JWT se valida aquí con **PyJWT** y el mismo secreto que Nest — no hace falta llamar a Auth en cada request.
-- Contrato del payload (`sub`, `email`, `role`): [docs/jwt-contract.md](../../docs/jwt-contract.md).
-- Migraciones de Django (no `synchronize`): cambios de schema versionados.
-- Solo usa **`catalog_db`**.
+- precio `Decimal(12, 2)`
+- JWT con PyJWT + mismo secret que Nest (no llama a Auth en cada request)
+- payload: [jwt-contract.md](../../docs/jwt-contract.md)
+- migraciones de Django
+- DB: `catalog_db`

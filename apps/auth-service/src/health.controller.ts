@@ -9,13 +9,9 @@ import { DataSource } from 'typeorm';
 export class HealthController {
   constructor(private readonly dataSource: DataSource) {}
 
-  /**
-   * No solo comprueba que Node esté vivo:
-   * también hace un SELECT 1 a Postgres.
-   * Si la DB está caída → 503 (no fingimos que todo está bien).
-   */
   @Get()
   async check() {
+    // ping a Postgres; si falla devolvemos 503
     try {
       await this.dataSource.query('SELECT 1');
 

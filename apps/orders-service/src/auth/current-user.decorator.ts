@@ -6,7 +6,6 @@ export type AuthUser = {
   role: string;
 };
 
-/** request.user después del JWT */
 export const CurrentUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): AuthUser => {
     const request = ctx.switchToHttp().getRequest<{ user: AuthUser }>();

@@ -1,10 +1,6 @@
 """
-Autenticación con el JWT que emite Auth Service (NestJS).
-
-Contrato del payload: docs/jwt-contract.md
-Campos requeridos: sub, email, role (mismos que signToken() en Auth).
-
-No guardamos usuarios aquí: solo decodificamos el token con el mismo JWT_SECRET.
+JWT de Auth (Nest). Validamos con el mismo JWT_SECRET.
+Payload: sub, email, role — docs/jwt-contract.md
 """
 
 from dataclasses import dataclass
@@ -16,7 +12,7 @@ from rest_framework import authentication, exceptions
 
 @dataclass
 class AuthUser:
-    """Usuario “ligero” que viaja en request.user (no es el User de Django)."""
+    """No es el User de Django; solo lo que viene en el token."""
 
     id: str
     email: str
