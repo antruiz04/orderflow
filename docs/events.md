@@ -1,13 +1,25 @@
 # Eventos Kafka
 
-Por ahora solo Orders publica. Inventory y Notifications van a consumir después.
-
 Broker local: `localhost:19092` desde el PC, `redpanda:9092` dentro de Docker.
+
+## Flujo
+
+```
+Orders → order.created
+         ↓
+Inventory reserva stock
+         ↓
+   ┌─────┴─────┐
+   ↓           ↓
+inventory.reserved   inventory.failed
+   ↓           ↓
+Orders → confirmed   Orders → cancelled
+```
 
 ## `order.created`
 
 Producer: Orders  
-Consumers (pendiente): Inventory, Notifications
+Consumer: Inventory
 
 ```json
 {
@@ -31,13 +43,33 @@ Consumers (pendiente): Inventory, Notifications
 - `productId` = id de Catalog (sin FK cross-db)
 - `unitPrice` = precio que Orders leyó de Catalog al crear el pedido
 
-## Pendiente
+## `inventory.reserved`
 
-| Topic | Dirección |
-|-------|-----------|
-| `inventory.reserved` | Inventory → Orders |
-| `inventory.failed` | Inventory → Orders |
-| update de status del pedido | Orders según respuesta de Inventory |
+Producer: Inventory  
+Consumer: Orders → status `confirmed`
+
+```json
+{
+  "event": "inventory.reserved",
+  "orderId": "uuid",
+  "items": [
+    { "productId": 1, "quantity": 2 }
+  ]
+}
+```
+
+## `inventory.failed`
+
+Producer: Inventory  
+Consumer: Orders → status `cancelled`
+
+```json
+{
+  "event": "inventory.failed",
+  "orderId": "uuid",
+  "reason": "insufficient_stock productId=1 need=5 have=2"
+}
+```
 
 Si cambio el shape de un evento, lo actualizo acá (igual que el JWT).
 

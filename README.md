@@ -9,8 +9,8 @@ Client
   └── API Gateway (NestJS) — pendiente
         ├── Auth (NestJS + Postgres + JWT)
         ├── Catalog (Django + Postgres)
-        ├── Orders (NestJS + Postgres + Kafka producer)
-        ├── Inventory (NestJS + Postgres + Kafka consumer) — pendiente
+        ├── Orders (NestJS + Postgres + Kafka producer/consumer)
+        ├── Inventory (NestJS + Postgres + Kafka consumer/producer)
         └── Notifications (Python consumer) — pendiente
 ```
 
@@ -51,8 +51,8 @@ orderflow/
 - [x] Infra (Docker Compose)
 - [x] Auth
 - [x] Catalog
-- [x] Orders + producer Kafka
-- [ ] Inventory (consumer) + confirmar/cancelar pedido según stock
+- [x] Orders + producer Kafka + consumer inventory.*
+- [x] Inventory (consumer order.created → reserved/failed)
 - [ ] Notifications
 - [ ] API Gateway
 
@@ -103,7 +103,18 @@ npm install
 npm run start:dev
 ```
 
-http://localhost:3002 — publica `order.created` en Redpanda (`localhost:19092`).
+http://localhost:3002 — publica `order.created` y escucha `inventory.reserved` / `inventory.failed`.
+
+## Correr Inventory
+
+```bash
+cd apps/inventory-service
+cp .env.example .env
+npm install
+npm run start:dev
+```
+
+http://localhost:3003 — carga stock con `POST /stock` (`productId` de Catalog + `quantity`).
 
 ## License
 

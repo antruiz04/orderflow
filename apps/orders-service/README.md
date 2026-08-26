@@ -8,7 +8,7 @@ Al crear un pedido:
 2. calcula totales con decimal.js
 3. guarda en `orders_db` como `pending`
 4. publica en Redpanda
-5. Inventory (después) va a confirmar o cancelar según stock
+5. Inventory responde con reserved/failed → status `confirmed` o `cancelled`
 
 ## Endpoints
 
@@ -33,7 +33,7 @@ No mandes `unitPrice`. Si lo mandas, el pipe lo rechaza. El precio sale de Catal
 
 ## Run
 
-Hace falta Auth (:3001), Catalog (:8000) y Docker (Postgres + Redpanda).
+Hace falta Auth (:3001), Catalog (:8000), Inventory (:3003) y Docker (Postgres + Redpanda).
 
 ```bash
 cp .env.example .env

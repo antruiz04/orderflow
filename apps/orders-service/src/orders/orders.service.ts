@@ -85,4 +85,22 @@ export class OrdersService {
   findOneForUser(id: string, userId: string): Promise<Order | null> {
     return this.ordersRepository.findOne({ where: { id, userId } });
   }
+
+  /**
+   * Inventory confirma o cancela. Solo mueve desde pending
+   * (reentrega Kafka no pisa confirmed/cancelled).
+   */
+  async applyInventoryResult(
+    orderId: string,
+    status: OrderStatus.CONFIRMED | OrderStatus.CANCELLED,
+  ): Promise<void> {
+    const order = await this.ordersRepository.findOne({
+      where: { id: orderId },
+    });
+    if (!order) return;
+    if (order.status !== OrderStatus.PENDING) return;
+
+    order.status = status;
+    await this.ordersRepository.save(order);
+  }
 }
