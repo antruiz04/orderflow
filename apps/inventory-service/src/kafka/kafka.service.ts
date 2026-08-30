@@ -7,6 +7,7 @@ export type OrderCreatedEvent = {
   event: 'order.created';
   orderId: string;
   userId: string;
+  userEmail?: string;
   total: string;
   items: Array<{
     productId: number;
@@ -112,6 +113,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
             value: JSON.stringify({
               event: 'inventory.reserved',
               orderId: payload.orderId,
+              userId: payload.userId,
+              userEmail: payload.userEmail,
               items: lines,
             }),
           },
@@ -129,6 +132,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
           value: JSON.stringify({
             event: 'inventory.failed',
             orderId: payload.orderId,
+            userId: payload.userId,
+            userEmail: payload.userEmail,
             reason: result.reason,
           }),
         },

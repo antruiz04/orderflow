@@ -11,7 +11,9 @@ Si cambio los claims en Auth, tengo que actualizar este doc y los consumidores.
 |--|----------|-----|
 | Emite | Auth | login/register → JWT |
 | Consume | Catalog, Orders | leen `Authorization: Bearer ...` |
+| Reenvía | API Gateway | no valida; pasa el header al servicio |
 
+El cliente puede pegarle al Gateway (`:3000`) en vez de a cada puerto.
 ## Secrets
 
 - `JWT_SECRET` igual en todos los `.env`

@@ -34,10 +34,7 @@ export class StockService {
     return this.processedRepo.findOne({ where: { orderId } });
   }
 
-  /**
-   * Reserva stock para un pedido. Todo-or-nothing.
-   * Si ya se procesó ese orderId, no vuelve a descontar (idempotencia).
-   */
+
   async reserveForOrder(
     orderId: string,
     items: OrderLine[],
@@ -50,7 +47,6 @@ export class StockService {
     }
 
     return this.dataSource.transaction(async (manager) => {
-      // agrupar por productId por si el pedido trae líneas repetidas
       const needed = new Map<number, number>();
       for (const item of items) {
         needed.set(
@@ -59,8 +55,7 @@ export class StockService {
         );
       }
 
-      // un solo pase: lock + validar + descontar en memoria
-      // el save de stock solo al final → all-or-nothing sin 2ª query
+      
       const toSave: StockItem[] = [];
 
       for (const [productId, qty] of needed) {

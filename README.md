@@ -6,12 +6,12 @@ Pedido + inventario con microservicios. NestJS, Django, Postgres, JWT y Kafka (R
 
 ```
 Client
-  └── API Gateway (NestJS) — pendiente
+  └── API Gateway (NestJS :3000)
         ├── Auth (NestJS + Postgres + JWT)
         ├── Catalog (Django + Postgres)
         ├── Orders (NestJS + Postgres + Kafka producer/consumer)
         ├── Inventory (NestJS + Postgres + Kafka consumer/producer)
-        └── Notifications (Python consumer) — pendiente
+        └── Notifications (Python + Kafka + SMTP/Mailhog)
 ```
 
 ## Infra local
@@ -53,8 +53,8 @@ orderflow/
 - [x] Catalog
 - [x] Orders + producer Kafka + consumer inventory.*
 - [x] Inventory (consumer order.created → reserved/failed)
-- [ ] Notifications
-- [ ] API Gateway
+- [x] Notifications (mail vía Mailhog)
+- [x] API Gateway
 
 ### Pendiente Auth
 
@@ -115,6 +115,30 @@ npm run start:dev
 ```
 
 http://localhost:3003 — carga stock con `POST /stock` (`productId` de Catalog + `quantity`).
+
+## Correr Notifications
+
+```bash
+cd apps/notifications-service
+py -3 -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+python main.py
+```
+
+Mails en http://localhost:8025 (Mailhog).
+
+## Correr API Gateway
+
+```bash
+cd apps/api-gateway
+cp .env.example .env
+npm install
+npm run start:dev
+```
+
+http://localhost:3000 — `/auth`, `/api`, `/orders`, `/stock` (más `/health`).
 
 ## License
 
