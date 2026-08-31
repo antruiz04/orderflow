@@ -19,9 +19,11 @@ export class OrdersService {
     private readonly catalogClient: CatalogClient,
   ) {}
 
-  async create(userId: string, dto: CreateOrderDto): Promise<Order> {
-    // precios desde Catalog (no del body)
-    // en serie por ahora; después se puede paralelizar
+  async create(
+    userId: string,
+    userEmail: string,
+    dto: CreateOrderDto,
+  ): Promise<Order> {
     const pricedItems: Array<{
       productId: number;
       quantity: number;
@@ -58,11 +60,11 @@ export class OrdersService {
 
     const saved = await this.ordersRepository.save(order);
 
-    // si esto falla después del save, el pedido queda pending sin evento (outbox pendiente)
     await this.kafkaService.publishOrderCreated({
       event: 'order.created',
       orderId: saved.id,
       userId: saved.userId,
+      userEmail,
       total: saved.total,
       items: saved.items.map((item) => ({
         productId: item.productId,
@@ -86,10 +88,6 @@ export class OrdersService {
     return this.ordersRepository.findOne({ where: { id, userId } });
   }
 
-  /**
-   * Inventory confirma o cancela. Solo mueve desde pending
-   * (reentrega Kafka no pisa confirmed/cancelled).
-   */
   async applyInventoryResult(
     orderId: string,
     status: OrderStatus.CONFIRMED | OrderStatus.CANCELLED,

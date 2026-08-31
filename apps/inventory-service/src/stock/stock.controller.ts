@@ -11,7 +11,6 @@ export class StockController {
     return this.stockService.list();
   }
 
-  /** carga/ajusta stock local (demo). productId = id de Catalog */
   @Post()
   upsert(@Body() dto: UpsertStockDto) {
     return this.stockService.upsert(dto.productId, dto.quantity);

@@ -4,6 +4,7 @@ Cada servicio tiene su propia base. No se cruzan tablas entre servicios: hablan 
 
 | Service       | Qué maneja              | DB |
 |---------------|-------------------------|----|
+| API Gateway   | entrypoint HTTP         | — |
 | Auth          | users, login, JWT       | `auth_db` |
 | Catalog       | products, categories    | `catalog_db` |
 | Orders        | pedidos                 | `orders_db` |
@@ -13,6 +14,7 @@ Cada servicio tiene su propia base. No se cruzan tablas entre servicios: hablan 
 ## Flujo objetivo
 
 ```
+0. Cliente → API Gateway (:3000)
 1. Cliente crea pedido            → Orders
 2. Orders publica order.created   → Kafka
 3. Inventory reserva stock
@@ -20,6 +22,10 @@ Cada servicio tiene su propia base. No se cruzan tablas entre servicios: hablan 
 5. Orders actualiza status
 6. Notifications manda mail (Mailhog en local)
 ```
+
+## API Gateway
+
+Proxy HTTP en Nest. Reenvía paths tal cual (`/auth`, `/api`, `/orders`, `/stock`) e incluye el `Authorization`. El JWT lo validan los servicios de atrás, no el gateway.
 
 ## Redpanda
 

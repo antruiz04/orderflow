@@ -6,6 +6,7 @@ export type OrderCreatedEvent = {
   event: 'order.created';
   orderId: string;
   userId: string;
+  userEmail: string;
   total: string;
   items: Array<{
     productId: number;

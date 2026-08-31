@@ -20,7 +20,7 @@ export class OrdersController {
 
   @Post()
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateOrderDto) {
-    return this.ordersService.create(user.userId, dto);
+    return this.ordersService.create(user.userId, user.email, dto);
   }
 
   @Get()
